@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bauzeitenplan — Gehrke Bauberatung</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=20">
+  <link rel="stylesheet" href="css/gantt.css?v=20">
+</head>
+<body>
+
+  <!-- Mobile-Hinweis -->
+  <div id="mobile-hint" class="mobile-hint">
+    <p>Dieses Tool ist für Desktop optimiert. Auf kleinen Bildschirmen ist die Bedienung eingeschränkt.</p>
+    <button onclick="document.getElementById('mobile-hint').style.display='none'" class="btn btn-outline">Verstanden</button>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header id="app-header">
+    <div class="header-logo">
+      <img src="assets/logo-dark.png" alt="Gehrke Bauberatung" class="header-logo-img">
+    </div>
+    <div class="header-title">
+      <h1>Bauzeitenplan</h1>
+    </div>
+    <div class="header-actions">
+      <button id="btn-new" class="btn btn-outline-light">&#8853; Neu</button>
+      <button id="btn-import" class="btn btn-outline-light">&#8593; Importieren</button>
+      <button id="btn-save" class="btn btn-primary-light">&#8595; Speichern</button>
+      <div class="dropdown-wrapper">
+        <button id="btn-export" class="btn btn-accent">Exportieren &#9662;</button>
+        <div class="dropdown-menu" id="export-dropdown">
+          <button id="btn-export-pdf">&#128196; Als PDF exportieren</button>
+          <button id="btn-export-excel">&#128202; Als Excel exportieren</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== HAUPTBEREICH ===== -->
+  <main id="app-main">
+
+    <!-- LINKE SPALTE: Sidebar -->
+    <aside id="sidebar">
+
+      <!-- Panel 1: Projektinformationen -->
+      <section class="panel" id="panel-project-info">
+        <h2 class="panel-title">Projektinformationen</h2>
+        <div class="form-group">
+          <label for="input-project-title">Projektname *</label>
+          <input type="text" id="input-project-title" placeholder="z.B. Neubau Musterstraße 5" maxlength="200">
+        </div>
+        <div class="form-group">
+          <label for="input-customer">Kunde *</label>
+          <input type="text" id="input-customer" placeholder="Kundenname oder Firma" maxlength="100">
+        </div>
+        <!-- Laufzeit wird automatisch aus den Gewerken berechnet -->
+        <div class="project-duration-info" id="project-duration-info"></div>
+        <!-- Versteckte Felder für Datenhaltung -->
+        <input type="hidden" id="input-project-manager" value="Jürgen Gehrke">
+        <input type="hidden" id="input-project-start">
+        <input type="hidden" id="input-project-end">
+      </section>
+
+      <!-- Panel 2: Handwerker -->
+      <section class="panel" id="panel-contractors">
+        <div class="panel-header-row">
+          <h2 class="panel-title">Gewerke</h2>
+          <button id="btn-add-contractor" class="btn btn-primary btn-small">+ Hinzufügen</button>
+        </div>
+        <div id="contractor-list">
+          <p class="empty-hint" id="contractor-empty-hint">Noch keine Gewerke eingetragen.<br>Klicke auf &laquo;+ Hinzufügen&raquo;.</p>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- RECHTE SPALTE: Gantt -->
+    <section id="gantt-container">
+      <div id="gantt-toolbar">
+        <button id="btn-scroll-today" class="btn btn-outline btn-small">&#9654; Heute</button>
+        <span class="gantt-info" id="gantt-kw-info"></span>
+      </div>
+      <div id="gantt-wrapper">
+        <div id="gantt-inner">
+          <!-- Wird durch gantt.js gefüllt -->
+          <div id="gantt-empty-state" class="gantt-empty-state">
+            <p>Füllen Sie die Projektinformationen aus und fügen Sie Gewerke hinzu,<br>um den Bauzeitenplan zu sehen.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== MODAL: Handwerker hinzufügen / bearbeiten ===== -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal" id="modal-contractor">
+      <div class="modal-header">
+        <h3 id="modal-title">Handwerker hinzufügen</h3>
+        <button class="modal-close" id="btn-modal-close" aria-label="Schließen">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="modal-firm">Firmenname <span class="label-optional">(optional)</span></label>
+          <input type="text" id="modal-firm" placeholder="z.B. Müller Elektro GmbH" maxlength="100">
+        </div>
+        <div class="form-group">
+          <label for="modal-trade">Gewerk / Tätigkeit *</label>
+          <input type="text" id="modal-trade" placeholder="z.B. Elektrik OG, Sanitär EG+OG" maxlength="150">
+          <span class="field-error hidden" id="err-trade">Bitte Gewerk eingeben.</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="modal-start-date">Startdatum *</label>
+            <input type="date" id="modal-start-date">
+            <span class="field-error hidden" id="err-start">Bitte Startdatum wählen.</span>
+          </div>
+          <div class="form-group half">
+            <label for="modal-end-date">Enddatum *
+              <span class="label-optional">(= Start bei Einzeltermin)</span>
+            </label>
+            <input type="date" id="modal-end-date">
+            <span class="field-error hidden" id="err-end">Enddatum darf nicht vor Startdatum liegen.</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="modal-color">Farbe im Plan</label>
+          <div class="color-picker-row">
+            <input type="color" id="modal-color" value="#3498DB">
+            <div id="color-presets">
+              <button class="color-preset" data-color="#E74C3C" style="background:#E74C3C" title="Rot"></button>
+              <button class="color-preset" data-color="#E67E22" style="background:#E67E22" title="Orange"></button>
+              <button class="color-preset" data-color="#F1C40F" style="background:#F1C40F" title="Gelb"></button>
+              <button class="color-preset" data-color="#2ECC71" style="background:#2ECC71" title="Grün"></button>
+              <button class="color-preset" data-color="#1ABC9C" style="background:#1ABC9C" title="Türkis"></button>
+              <button class="color-preset" data-color="#3498DB" style="background:#3498DB" title="Blau"></button>
+              <button class="color-preset" data-color="#9B59B6" style="background:#9B59B6" title="Lila"></button>
+              <button class="color-preset" data-color="#34495E" style="background:#34495E" title="Dunkelgrau"></button>
+              <button class="color-preset" data-color="#E91E63" style="background:#E91E63" title="Pink"></button>
+              <button class="color-preset" data-color="#009688" style="background:#009688" title="Teal"></button>
+              <button class="color-preset" data-color="#FF5722" style="background:#FF5722" title="Tiefrot"></button>
+              <button class="color-preset" data-color="#607D8B" style="background:#607D8B" title="Blaugrau"></button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Vorschau</label>
+          <div id="modal-preview-bar" style="height:28px;background:#3498DB;display:flex;align-items:center;padding:0 12px;">
+            <span id="modal-preview-label" style="font-size:14px;font-family:var(--font-sans);">Vorschau</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-modal-cancel" class="btn btn-outline">Abbrechen</button>
+        <button id="btn-modal-save" class="btn btn-primary">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BESTÄTIGUNGS-DIALOG ===== -->
+  <div id="confirm-overlay" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="confirm-title">Bestätigung</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-confirm-cancel" class="btn btn-outline">Abbrechen</button>
+        <button id="btn-confirm-ok" class="btn btn-danger-solid">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST-CONTAINER ===== -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- ===== UNSICHTBARES FILE-INPUT ===== -->
+  <input type="file" id="file-import-input" accept=".bpz,.json,.xlsx" style="display:none">
+
+  <!-- ===== BIBLIOTHEKEN (lokal) ===== -->
+  <script src="lib/jspdf.umd.min.js?v=20"></script>
+  <script src="lib/jspdf.plugin.autotable.min.js?v=20"></script>
+  <script src="lib/exceljs.min.js?v=20"></script>
+  <!-- SheetJS als Fallback: <script src="lib/xlsx.full.min.js?v=20"></script> -->
+
+  <!-- ===== EINGEBETTETES LOGO (Base64) ===== -->
+  <script src="js/logo-data.js?v=20"></script>
+
+  <!-- ===== APP-CODE ===== -->
+  <script src="js/data.js?v=20"></script>
+  <script src="js/gantt.js?v=20"></script>
+  <script src="js/export-pdf.js?v=20"></script>
+  <script src="js/export-excel.js?v=20"></script>
+  <script src="js/app.js?v=20"></script>
+
+</body>
+</html>

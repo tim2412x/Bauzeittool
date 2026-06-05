@@ -1,0 +1,348 @@
+/* ===== GANTT-CONTAINER ===== */
+#gantt-container {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--warm-white);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Toolbar über dem Gantt */
+#gantt-toolbar {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-bottom: var(--divider-on-light);
+  background: var(--warm-white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+
+#gantt-toolbar .gantt-info {
+  font-size: 13px;
+  color: var(--stone);
+  margin-left: auto;
+}
+
+#gantt-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+}
+
+#gantt-inner {
+  min-width: max-content;
+  min-height: 100%;
+}
+
+/* ===== GANTT-EMPTY-STATE ===== */
+.gantt-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+  color: var(--stone);
+  font-size: 16px;
+  text-align: center;
+  line-height: 1.8;
+  padding: 40px;
+}
+
+/* ===== GANTT-TABELLE ===== */
+.gantt-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--warm-white);
+}
+
+/* ===== STICKY SPALTEN: GEWERK + DATUM ===== */
+.gantt-table {
+  --label-w: 200px;   /* wird per JS dynamisch gesetzt */
+  --date-w: 150px;
+}
+
+.gantt-table th.label-col,
+.gantt-table td.gantt-cell-label {
+  position: sticky;
+  left: 0;
+  background: var(--cream);
+  z-index: 10;
+  border-right: 1px solid var(--stone-light);
+  border-bottom: 1px solid var(--stone-light);
+  width: var(--label-w);
+  min-width: var(--label-w);
+  max-width: var(--label-w);
+}
+
+.gantt-table th.date-col,
+.gantt-table td.gantt-cell-date {
+  position: sticky;
+  left: var(--label-w);
+  background: var(--cream);
+  z-index: 10;
+  border-right: 2px solid var(--stone-light);
+  border-bottom: 1px solid var(--stone-light);
+  width: var(--date-w);
+  min-width: var(--date-w);
+  max-width: var(--date-w);
+}
+
+/* ===== KOPFZEILEN ===== */
+.gantt-table thead th {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* Label + Datum Kopfzeile (beide rowSpan=3) */
+.gantt-table th.label-col,
+.gantt-table th.date-col {
+  background: var(--navy);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  height: 76px;
+  padding: 0 10px;
+  text-align: left;
+  z-index: 20;
+  vertical-align: middle;
+}
+
+.gantt-table th.date-col {
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+/* Monats-Kopfzeile */
+.gantt-table th.month-col {
+  background: var(--navy-light);
+  color: rgba(255,255,255,0.9);
+  font-size: 13px;
+  font-weight: 500;
+  height: 22px;
+  padding: 0 4px;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  top: 26px;
+  letter-spacing: 0.03em;
+}
+
+/* 1. Header-Zeile: Jahr */
+.gantt-table th.year-col {
+  background: var(--navy-mid);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  height: 26px;
+  padding: 0 6px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  top: 0;
+}
+
+/* 3. Header-Zeile: KW */
+.gantt-table th.week-col {
+  background: var(--navy);
+  color: rgba(255,255,255,0.65);
+  font-size: 12px;
+  font-weight: 400;
+  height: 22px;
+  width: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  padding: 0 2px;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  top: 48px; /* year(26) + month(22) = 48 */
+}
+
+/* Heutige KW in Header — KEINE Markierung mehr (Klasse bleibt nur für Scroll-Navigation) */
+.gantt-table th.week-col-today {
+  /* bewusst keine Hervorhebung */
+}
+
+/* ===== DATENZEILEN ===== */
+.gantt-row {
+  height: 36px;
+}
+
+.gantt-row:nth-child(even) {
+  background: rgba(244,239,230,0.5);
+}
+
+.gantt-row:hover {
+  background: rgba(13,28,42,0.03);
+}
+
+/* Label-Zellen — voller Inhalt mit Zeilenumbruch */
+.gantt-cell-label {
+  position: relative;
+  padding: 5px 30px 5px 12px;  /* rechts Platz für Stift-Icon */
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  height: 36px;
+  vertical-align: middle;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+}
+
+/* Stift-Icon zum Inline-Bearbeiten */
+.gantt-edit-btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--stone);
+  font-size: 15px;
+  padding: 3px 4px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+.gantt-row:hover .gantt-edit-btn { opacity: 1; }
+.gantt-edit-btn:hover { color: var(--accent); }
+
+/* Inline-Edit Inputs */
+.gantt-edit-trade {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 6px;
+  border: 1px solid var(--accent);
+  background: #fff;
+  outline: none;
+  color: var(--text);
+}
+.gantt-edit-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 3px 4px;
+}
+.gantt-edit-dates input[type="date"] {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 2px 4px;
+  border: 1px solid var(--accent);
+  background: #fff;
+  outline: none;
+  width: 100%;
+}
+.gantt-edit-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+.gantt-edit-actions button {
+  flex: 1;
+  font-size: 13px;
+  padding: 2px 0;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.gantt-edit-save { background: var(--accent); color: #fff; }
+.gantt-edit-save:hover { background: var(--accent-h); }
+.gantt-edit-cancel { background: var(--stone-light); color: var(--text); }
+.gantt-row-editing { background: rgba(184,118,58,0.06) !important; }
+
+/* Datum-Zellen */
+.gantt-cell-date {
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-mid);
+  height: 36px;
+  vertical-align: middle;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* KW-Zellen */
+.gantt-cell-week {
+  width: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  height: 36px;
+  border-right: 1px solid rgba(196,187,176,0.3);
+  border-bottom: 1px solid rgba(196,187,176,0.2);
+  padding: 0;
+}
+
+/* Balken-Zellen */
+.gantt-cell-bar {
+  border-right: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Heutige KW-Spalte — KEINE Markierung mehr (User-Wunsch: Projektstart-KW nicht markieren) */
+.gantt-cell-today {
+  /* bewusst keine Hervorhebung */
+}
+
+/* Wochenende-KWs (kleine Markierung) */
+.gantt-cell-weekend {
+  background: rgba(196,187,176,0.12);
+}
+
+/* Jahres-Trennlinie */
+.gantt-cell-year-boundary {
+  border-right: 2px solid rgba(184,118,58,0.4) !important;
+}
+th.year-boundary {
+  border-right: 2px solid rgba(184,118,58,0.4) !important;
+}
+
+/* ===== EINZELTERMIN (Start = Ende) ===== */
+.gantt-cell-single-day {
+  position: relative !important;
+  /* Linker und rechter halber Rand transparent → wirkt schmaler */
+  box-shadow: inset 4px 0 0 rgba(255,255,255,0.25),
+              inset -4px 0 0 rgba(255,255,255,0.25);
+}
+
+/* Rotierter Datums-Text im Balken */
+.gantt-single-marker {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
+  transform-origin: center center;
+  font-size: 7px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+/* Firma-Hinweis in Gewerk-Label — eigene Zeile, gedämpfte Farbe */
+.gantt-firm-hint {
+  display: block;
+  color: var(--stone);
+  font-size: 13px;
+  margin-top: 1px;
+  font-weight: 400;
+}
