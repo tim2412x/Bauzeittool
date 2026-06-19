@@ -3,6 +3,10 @@
 let autosaveTimer = null;
 let currentEditId = null; // null = neu, string = bearbeiten
 
+// Flüchtige Mehrfachauswahl für gemeinsames Verschieben.
+// BEWUSST nicht im Datenmodell → erscheint nie in Speicherdatei/PDF/Excel.
+let selectedIds = new Set();
+
 // ===== INITIALISIERUNG =====
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
@@ -63,6 +67,11 @@ function bindAllEvents() {
 
   // Handwerker hinzufügen
   document.getElementById('btn-add-contractor').addEventListener('click', () => openContractorModal(null));
+
+  // Mehrfachauswahl & gemeinsames Verschieben
+  document.getElementById('bulk-selectall').addEventListener('change', handleBulkSelectAll);
+  document.getElementById('bulk-shift-left').addEventListener('click', () => handleBulkShift(-1));
+  document.getElementById('bulk-shift-right').addEventListener('click', () => handleBulkShift(1));
 
   // Modal
   document.getElementById('btn-modal-close').addEventListener('click', closeContractorModal);
@@ -234,6 +243,10 @@ function renderContractorList() {
   const list = document.getElementById('contractor-list');
   const contractors = AppData.currentProject.contractors;
 
+  // Auswahl bereinigen: IDs gelöschter Gewerke entfernen
+  const validIds = new Set(contractors.map(c => c.id));
+  [...selectedIds].forEach(id => { if (!validIds.has(id)) selectedIds.delete(id); });
+
   // Nur Contractor-Cards entfernen — Hint-Element BLEIBT im DOM
   list.querySelectorAll('.contractor-card').forEach(el => el.remove());
 
@@ -249,22 +262,43 @@ function renderContractorList() {
 
   if (contractors.length === 0) {
     hint.style.display = '';
+    updateBulkBar();
     return;
   }
 
   hint.style.display = 'none';
 
   const sorted = [...contractors].sort((a, b) => a.sortOrder - b.sortOrder);
-  sorted.forEach(c => list.appendChild(buildContractorCard(c)));
+  sorted.forEach((c, i) => list.appendChild(buildContractorCard(c, i, sorted.length)));
 
   initContractorDragSort();
+  updateBulkBar();
 }
 
-function buildContractorCard(contractor) {
+function buildContractorCard(contractor, position, total) {
   const div = document.createElement('div');
   div.className = 'contractor-card';
   div.dataset.id = contractor.id;
   div.draggable = true;
+
+  // Auswahl-Checkbox am linken Rand (für gemeinsames Verschieben)
+  const checkWrap = document.createElement('label');
+  checkWrap.className = 'contractor-check-wrap';
+  checkWrap.title = 'Für gemeinsames Verschieben auswählen';
+  const check = document.createElement('input');
+  check.type = 'checkbox';
+  check.className = 'contractor-check';
+  check.checked = selectedIds.has(contractor.id);
+  check.addEventListener('change', () => {
+    if (check.checked) selectedIds.add(contractor.id);
+    else selectedIds.delete(contractor.id);
+    div.classList.toggle('is-selected', check.checked);
+    updateBulkBar();
+  });
+  // Klick auf die Checkbox darf kein Karten-Drag auslösen
+  checkWrap.addEventListener('mousedown', (e) => e.stopPropagation());
+  checkWrap.appendChild(check);
+  div.classList.toggle('is-selected', check.checked);
 
   const badge = document.createElement('div');
   badge.className = 'contractor-color-badge';
@@ -288,6 +322,21 @@ function buildContractorCard(contractor) {
   const actions = document.createElement('div');
   actions.className = 'contractor-actions';
 
+  // Reihenfolge ändern: nach oben / nach unten
+  const btnUp = document.createElement('button');
+  btnUp.className = 'btn-icon btn-move';
+  btnUp.title = 'Nach oben verschieben';
+  btnUp.innerHTML = '&#9650;'; // ▲
+  btnUp.disabled = position === 0;
+  btnUp.addEventListener('click', () => moveContractor(contractor.id, -1));
+
+  const btnDown = document.createElement('button');
+  btnDown.className = 'btn-icon btn-move';
+  btnDown.title = 'Nach unten verschieben';
+  btnDown.innerHTML = '&#9660;'; // ▼
+  btnDown.disabled = position === total - 1;
+  btnDown.addEventListener('click', () => moveContractor(contractor.id, 1));
+
   const btnEdit = document.createElement('button');
   btnEdit.className = 'btn-icon btn-edit';
   btnEdit.title = 'Bearbeiten';
@@ -300,12 +349,104 @@ function buildContractorCard(contractor) {
   btnDelete.innerHTML = '&#10005;';
   btnDelete.addEventListener('click', () => handleDeleteContractor(contractor.id));
 
+  actions.appendChild(btnUp);
+  actions.appendChild(btnDown);
   actions.appendChild(btnEdit);
   actions.appendChild(btnDelete);
+  div.appendChild(checkWrap);
   div.appendChild(badge);
   div.appendChild(info);
   div.appendChild(actions);
   return div;
+}
+
+// ===== REIHENFOLGE ÄNDERN (Pfeil-Buttons) =====
+// dir: -1 = nach oben, +1 = nach unten
+function moveContractor(id, dir) {
+  const contractors = AppData.currentProject.contractors;
+  const sorted = [...contractors].sort((a, b) => a.sortOrder - b.sortOrder);
+  const idx = sorted.findIndex(c => c.id === id);
+  const target = idx + dir;
+  if (idx === -1 || target < 0 || target >= sorted.length) return;
+  [sorted[idx], sorted[target]] = [sorted[target], sorted[idx]];
+  sorted.forEach((c, i) => c.sortOrder = i);
+  renderContractorList();
+  renderGantt(AppData.currentProject);
+  markDirty();
+}
+
+// ===== MEHRFACHAUSWAHL & GEMEINSAMES VERSCHIEBEN =====
+// Aktualisiert Anzahl-Anzeige, Button-Status und Select-all-Checkbox.
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  if (!bar) return;
+  const contractors = AppData.currentProject.contractors;
+
+  // Leiste nur anzeigen, wenn überhaupt Gewerke vorhanden sind
+  bar.classList.toggle('hidden', contractors.length === 0);
+
+  const count = selectedIds.size;
+  const countEl = document.getElementById('bulk-count');
+  if (countEl) countEl.textContent = count === 0
+    ? 'Keine ausgewählt'
+    : `${count} ausgewählt`;
+
+  const leftBtn  = document.getElementById('bulk-shift-left');
+  const rightBtn = document.getElementById('bulk-shift-right');
+  if (leftBtn)  leftBtn.disabled  = count === 0;
+  if (rightBtn) rightBtn.disabled = count === 0;
+
+  const selectAll = document.getElementById('bulk-selectall');
+  if (selectAll) {
+    selectAll.checked = count > 0 && count === contractors.length;
+    selectAll.indeterminate = count > 0 && count < contractors.length;
+  }
+}
+
+function handleBulkSelectAll(e) {
+  const contractors = AppData.currentProject.contractors;
+  if (e.target.checked) contractors.forEach(c => selectedIds.add(c.id));
+  else selectedIds.clear();
+  renderContractorList();
+}
+
+// direction: +1 = nach rechts (später), -1 = nach links (früher)
+function handleBulkShift(direction) {
+  if (selectedIds.size === 0) return;
+  const amount = parseInt(document.getElementById('bulk-amount').value, 10);
+  if (!amount || amount < 1) {
+    showToast('Bitte eine gültige Anzahl eingeben.', 'error');
+    return;
+  }
+  const unit = document.getElementById('bulk-unit').value;
+  const days = (unit === 'week' ? amount * 7 : amount) * direction;
+
+  let moved = 0;
+  AppData.currentProject.contractors.forEach(c => {
+    if (selectedIds.has(c.id)) {
+      c.startDate = addDaysISO(c.startDate, days);
+      c.endDate   = addDaysISO(c.endDate, days);
+      moved++;
+    }
+  });
+
+  // Auswahl bleibt erhalten → Folge-Verschiebungen möglich
+  renderContractorList();
+  renderGantt(AppData.currentProject);
+  markDirty();
+
+  const dirLabel  = direction > 0 ? 'später' : 'früher';
+  const unitLabel = unit === 'week'
+    ? 'Woche'  + (amount === 1 ? '' : 'n')
+    : 'Tag'    + (amount === 1 ? '' : 'e');
+  showToast(`${moved} Gewerk${moved === 1 ? '' : 'e'} um ${amount} ${unitLabel} nach ${dirLabel} verschoben.`, 'success');
+}
+
+// Addiert Tage (auch negativ) auf ein ISO-Datum und gibt ISO zurück
+function addDaysISO(iso, days) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return toISODate(d);
 }
 
 // ===== MODAL: HANDWERKER HINZUFÜGEN / BEARBEITEN =====

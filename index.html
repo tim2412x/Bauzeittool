@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=20">
-  <link rel="stylesheet" href="css/gantt.css?v=20">
+  <link rel="stylesheet" href="css/styles.css?v=21">
+  <link rel="stylesheet" href="css/gantt.css?v=21">
 </head>
 <body>
 
@@ -71,6 +71,32 @@
           <h2 class="panel-title">Gewerke</h2>
           <button id="btn-add-contractor" class="btn btn-primary btn-small">+ Hinzufügen</button>
         </div>
+
+        <!-- Mehrfachauswahl & gemeinsames Verschieben (erscheint nur im Tool, nie im Export) -->
+        <div id="bulk-bar" class="bulk-bar hidden">
+          <div class="bulk-bar-top">
+            <label class="bulk-selectall-label" title="Alle Gewerke auswählen">
+              <input type="checkbox" id="bulk-selectall">
+              <span>Alle auswählen</span>
+            </label>
+            <span class="bulk-count" id="bulk-count">Keine ausgewählt</span>
+          </div>
+          <div class="bulk-shift">
+            <span class="bulk-shift-label">Ausgewählte verschieben um</span>
+            <div class="bulk-shift-input">
+              <input type="number" id="bulk-amount" class="bulk-amount" min="1" max="520" value="1">
+              <select id="bulk-unit" class="bulk-unit">
+                <option value="week">Wochen</option>
+                <option value="day">Tage</option>
+              </select>
+            </div>
+            <div class="bulk-shift-btns">
+              <button id="bulk-shift-left" class="btn btn-outline btn-small" title="nach links – früher" disabled>&larr; Fr&uuml;her</button>
+              <button id="bulk-shift-right" class="btn btn-primary btn-small" title="nach rechts – später" disabled>Sp&auml;ter &rarr;</button>
+            </div>
+          </div>
+        </div>
+
         <div id="contractor-list">
           <p class="empty-hint" id="contractor-empty-hint">Noch keine Gewerke eingetragen.<br>Klicke auf &laquo;+ Hinzufügen&raquo;.</p>
         </div>
@@ -184,20 +210,20 @@
   <input type="file" id="file-import-input" accept=".bpz,.json,.xlsx" style="display:none">
 
   <!-- ===== BIBLIOTHEKEN (lokal) ===== -->
-  <script src="lib/jspdf.umd.min.js?v=20"></script>
-  <script src="lib/jspdf.plugin.autotable.min.js?v=20"></script>
-  <script src="lib/exceljs.min.js?v=20"></script>
-  <!-- SheetJS als Fallback: <script src="lib/xlsx.full.min.js?v=20"></script> -->
+  <script src="lib/jspdf.umd.min.js?v=21"></script>
+  <script src="lib/jspdf.plugin.autotable.min.js?v=21"></script>
+  <script src="lib/exceljs.min.js?v=21"></script>
+  <!-- SheetJS als Fallback: <script src="lib/xlsx.full.min.js?v=21"></script> -->
 
   <!-- ===== EINGEBETTETES LOGO (Base64) ===== -->
-  <script src="js/logo-data.js?v=20"></script>
+  <script src="js/logo-data.js?v=21"></script>
 
   <!-- ===== APP-CODE ===== -->
-  <script src="js/data.js?v=20"></script>
-  <script src="js/gantt.js?v=20"></script>
-  <script src="js/export-pdf.js?v=20"></script>
-  <script src="js/export-excel.js?v=20"></script>
-  <script src="js/app.js?v=20"></script>
+  <script src="js/data.js?v=21"></script>
+  <script src="js/gantt.js?v=21"></script>
+  <script src="js/export-pdf.js?v=21"></script>
+  <script src="js/export-excel.js?v=21"></script>
+  <script src="js/app.js?v=21"></script>
 
 </body>
 </html>
