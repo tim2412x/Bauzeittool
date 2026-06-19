@@ -189,15 +189,67 @@
 /* Label-Zellen — voller Inhalt mit Zeilenumbruch */
 .gantt-cell-label {
   position: relative;
-  padding: 5px 30px 5px 12px;  /* rechts Platz für Stift-Icon */
+  padding: 4px 26px 4px 6px;  /* rechts Platz für Stift-Icon */
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
   height: 36px;
   vertical-align: middle;
+}
+
+/* Innerer Flex-Container: Steuerelemente links, Name rechts daneben */
+.gantt-label-inner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+/* Steuerelemente links neben dem Namen (Checkbox + Sortierpfeile) */
+.gantt-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.gantt-row-check {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 0;
+}
+.gantt-row-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.gantt-reorder-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--stone);
+  font-size: 9px;
+  line-height: 1;
+  padding: 1px 2px;
+  transition: color 0.15s;
+}
+.gantt-reorder-btn:hover:not(:disabled) { color: var(--accent); }
+.gantt-reorder-btn:disabled { opacity: 0.25; cursor: default; }
+
+/* Gewerk-Name (+ Firma) — füllt restliche Breite, umbricht bei Bedarf */
+.gantt-label-text {
+  flex: 1;
+  min-width: 0;
   white-space: normal;
   word-break: break-word;
-  line-height: 1.25;
+  line-height: 1.2;
+}
+
+/* Ausgewählte Zeile dezent bronze markieren */
+.gantt-row.is-selected td.gantt-cell-label {
+  background: rgba(184, 118, 58, 0.12);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 /* Stift-Icon zum Inline-Bearbeiten */

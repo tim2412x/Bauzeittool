@@ -269,36 +269,17 @@ function renderContractorList() {
   hint.style.display = 'none';
 
   const sorted = [...contractors].sort((a, b) => a.sortOrder - b.sortOrder);
-  sorted.forEach((c, i) => list.appendChild(buildContractorCard(c, i, sorted.length)));
+  sorted.forEach(c => list.appendChild(buildContractorCard(c)));
 
   initContractorDragSort();
   updateBulkBar();
 }
 
-function buildContractorCard(contractor, position, total) {
+function buildContractorCard(contractor) {
   const div = document.createElement('div');
   div.className = 'contractor-card';
   div.dataset.id = contractor.id;
   div.draggable = true;
-
-  // Auswahl-Checkbox am linken Rand (für gemeinsames Verschieben)
-  const checkWrap = document.createElement('label');
-  checkWrap.className = 'contractor-check-wrap';
-  checkWrap.title = 'Für gemeinsames Verschieben auswählen';
-  const check = document.createElement('input');
-  check.type = 'checkbox';
-  check.className = 'contractor-check';
-  check.checked = selectedIds.has(contractor.id);
-  check.addEventListener('change', () => {
-    if (check.checked) selectedIds.add(contractor.id);
-    else selectedIds.delete(contractor.id);
-    div.classList.toggle('is-selected', check.checked);
-    updateBulkBar();
-  });
-  // Klick auf die Checkbox darf kein Karten-Drag auslösen
-  checkWrap.addEventListener('mousedown', (e) => e.stopPropagation());
-  checkWrap.appendChild(check);
-  div.classList.toggle('is-selected', check.checked);
 
   const badge = document.createElement('div');
   badge.className = 'contractor-color-badge';
@@ -322,21 +303,6 @@ function buildContractorCard(contractor, position, total) {
   const actions = document.createElement('div');
   actions.className = 'contractor-actions';
 
-  // Reihenfolge ändern: nach oben / nach unten
-  const btnUp = document.createElement('button');
-  btnUp.className = 'btn-icon btn-move';
-  btnUp.title = 'Nach oben verschieben';
-  btnUp.innerHTML = '&#9650;'; // ▲
-  btnUp.disabled = position === 0;
-  btnUp.addEventListener('click', () => moveContractor(contractor.id, -1));
-
-  const btnDown = document.createElement('button');
-  btnDown.className = 'btn-icon btn-move';
-  btnDown.title = 'Nach unten verschieben';
-  btnDown.innerHTML = '&#9660;'; // ▼
-  btnDown.disabled = position === total - 1;
-  btnDown.addEventListener('click', () => moveContractor(contractor.id, 1));
-
   const btnEdit = document.createElement('button');
   btnEdit.className = 'btn-icon btn-edit';
   btnEdit.title = 'Bearbeiten';
@@ -349,11 +315,8 @@ function buildContractorCard(contractor, position, total) {
   btnDelete.innerHTML = '&#10005;';
   btnDelete.addEventListener('click', () => handleDeleteContractor(contractor.id));
 
-  actions.appendChild(btnUp);
-  actions.appendChild(btnDown);
   actions.appendChild(btnEdit);
   actions.appendChild(btnDelete);
-  div.appendChild(checkWrap);
   div.appendChild(badge);
   div.appendChild(info);
   div.appendChild(actions);
@@ -408,6 +371,7 @@ function handleBulkSelectAll(e) {
   if (e.target.checked) contractors.forEach(c => selectedIds.add(c.id));
   else selectedIds.clear();
   renderContractorList();
+  renderGantt(AppData.currentProject); // Checkboxen in der Vorschau aktualisieren
 }
 
 // direction: +1 = nach rechts (später), -1 = nach links (früher)

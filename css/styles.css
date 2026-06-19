@@ -445,35 +445,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Reorder-Pfeile (nach oben / unten) */
-.btn-icon.btn-move {
-  font-size: 11px;
-  padding: 3px 4px;
-}
-.btn-icon:disabled {
-  opacity: 0.22;
-  cursor: default;
-}
-.btn-icon:disabled:hover { color: var(--stone); }
-
-/* ===== AUSWAHL-CHECKBOX IN DER GEWERK-KARTE ===== */
-.contractor-check-wrap {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 0 2px;
-  cursor: pointer;
-}
-.contractor-check {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-.contractor-card.is-selected {
-  background: rgba(184, 118, 58, 0.08);
-}
-
 /* ===== MEHRFACH-VERSCHIEBE-LEISTE ===== */
 .bulk-bar {
   border: 1px solid var(--stone-light);
@@ -800,7 +771,8 @@ body {
   #toast-container,
   #mobile-hint,
   #bulk-bar,
-  .contractor-check-wrap,
+  .gantt-row-controls,
+  .gantt-edit-btn,
   .contractor-actions { display: none !important; }
 
   /* App-Header minimieren */

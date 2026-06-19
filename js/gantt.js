@@ -38,7 +38,7 @@ function renderGantt(project) {
 
   const tbody = document.createElement('tbody');
   const sorted = [...project.contractors].sort((a, b) => a.sortOrder - b.sortOrder);
-  sorted.forEach(c => tbody.appendChild(buildGanttRow(c, cols, project.settings)));
+  sorted.forEach((c, i) => tbody.appendChild(buildGanttRow(c, cols, i, sorted.length)));
   table.appendChild(tbody);
 
   frag.appendChild(table);
@@ -69,9 +69,9 @@ function computeLabelWidth(contractors) {
     const w = Math.max(tradeW, firmW);
     if (w > maxPx) maxPx = w;
   });
-  // Innenabstand: links 12 + rechts 30 (Stift-Icon) + 4 Reserve
-  const px = Math.round(maxPx + 46);
-  return Math.max(210, Math.min(440, px));
+  // Innenabstand: links Steuerelemente (Checkbox + Pfeile ~46) + rechts Stift-Icon (~26) + Reserve
+  const px = Math.round(maxPx + 84);
+  return Math.max(260, Math.min(460, px));
 }
 
 // Deutsche Monatsnamen (kurz)
@@ -177,7 +177,7 @@ function updateDurationInfo(project) {
 let ganttEditId = null;
 
 // ===== GANTT-ZEILE =====
-function buildGanttRow(contractor, cols) {
+function buildGanttRow(contractor, cols, position, total) {
   const tr = document.createElement('tr');
   tr.className = 'gantt-row';
   tr.dataset.id = contractor.id;
@@ -185,6 +185,10 @@ function buildGanttRow(contractor, cols) {
   const single = isSingleDay(contractor);
   const editing = ganttEditId === contractor.id;
   if (editing) tr.classList.add('gantt-row-editing');
+  // Auswahl-Markierung (für gemeinsames Verschieben)
+  if (typeof selectedIds !== 'undefined' && selectedIds.has(contractor.id)) {
+    tr.classList.add('is-selected');
+  }
 
   // Datumsbezeichnung für Tooltip
   const dateLabel = single
@@ -211,11 +215,59 @@ function buildGanttRow(contractor, cols) {
     tdLabel.appendChild(inp);
   } else {
     tdLabel.title = rowTitle;
+
+    // Innerer Flex-Container (td bleibt table-cell für korrekte Spaltenbreite)
+    const inner = document.createElement('div');
+    inner.className = 'gantt-label-inner';
+
+    // ── Steuerelemente links: Auswahl-Checkbox + Sortierpfeile ──
+    const controls = document.createElement('div');
+    controls.className = 'gantt-row-controls';
+
+    const check = document.createElement('input');
+    check.type = 'checkbox';
+    check.className = 'gantt-row-check';
+    check.checked = typeof selectedIds !== 'undefined' && selectedIds.has(contractor.id);
+    check.title = 'Für gemeinsames Verschieben auswählen';
+    check.addEventListener('change', () => {
+      if (check.checked) selectedIds.add(contractor.id);
+      else selectedIds.delete(contractor.id);
+      tr.classList.toggle('is-selected', check.checked);
+      if (typeof updateBulkBar === 'function') updateBulkBar();
+    });
+    controls.appendChild(check);
+
+    const reorder = document.createElement('div');
+    reorder.className = 'gantt-row-reorder';
+    const upBtn = document.createElement('button');
+    upBtn.className = 'gantt-reorder-btn';
+    upBtn.title = 'Nach oben verschieben';
+    upBtn.innerHTML = '&#9650;'; // ▲
+    upBtn.disabled = position === 0;
+    upBtn.addEventListener('click', (e) => { e.stopPropagation(); if (typeof moveContractor === 'function') moveContractor(contractor.id, -1); });
+    const downBtn = document.createElement('button');
+    downBtn.className = 'gantt-reorder-btn';
+    downBtn.title = 'Nach unten verschieben';
+    downBtn.innerHTML = '&#9660;'; // ▼
+    downBtn.disabled = position === total - 1;
+    downBtn.addEventListener('click', (e) => { e.stopPropagation(); if (typeof moveContractor === 'function') moveContractor(contractor.id, 1); });
+    reorder.appendChild(upBtn);
+    reorder.appendChild(downBtn);
+    controls.appendChild(reorder);
+
+    inner.appendChild(controls);
+
+    // ── Gewerk-Name (+ Firma) ──
+    const textSpan = document.createElement('span');
+    textSpan.className = 'gantt-label-text';
     if (contractor.firm && contractor.firm.trim()) {
-      tdLabel.innerHTML = `<span>${escHtmlGantt(contractor.trade)}<span class="gantt-firm-hint">${escHtmlGantt(contractor.firm)}</span></span>`;
+      textSpan.innerHTML = `${escHtmlGantt(contractor.trade)}<span class="gantt-firm-hint">${escHtmlGantt(contractor.firm)}</span>`;
     } else {
-      tdLabel.textContent = contractor.trade;
+      textSpan.textContent = contractor.trade;
     }
+    inner.appendChild(textSpan);
+    tdLabel.appendChild(inner);
+
     // Stift-Icon zum Bearbeiten
     const editBtn = document.createElement('button');
     editBtn.className = 'gantt-edit-btn';
